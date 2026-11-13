@@ -1,0 +1,13 @@
+.git
+.gitignore
+node_modules
+dist
+.build
+.reasonix
+config.json
+data/chrome-profile
+data/prices.json
+data/cache
+assets/logo.jpg
+*.log
+Thumbs.db

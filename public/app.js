@@ -673,25 +673,63 @@
     const old = btn.textContent;
     btn.textContent = '登录中…';
     try {
-      const res = await fetch('/api/ctrip/login', { method: 'POST' });
-      const data = await res.json();
-      if (data.started || data.code === 'LOGIN_IN_PROGRESS') {
-        banner(
-          '已打开登录窗口。<strong>请在弹出的 Chrome 窗口里扫码登录携程</strong>，登录成功后这里会自动检测。'
-        );
-        toast('已打开登录窗口，请扫码');
-        pollCtripLogin(btn, old);
-        return;
-      }
-      throw new Error(data.error || '打开登录窗口失败');
+      showQrDialog();
+      await fetchQrCode();
+      pollCtripLogin(btn, old);
     } catch (e) {
       btn.disabled = false;
       btn.textContent = old;
+      closeQrDialog();
       toast(`登录失败：${e.message}`, true);
     }
   }
 
-  /** 轮询 /api/ctrip/status，直到登录窗口关闭（loginCtrip 流程结束）再看结果 */
+  function showQrDialog() {
+    $('#qrPlaceholder').classList.remove('hidden');
+    $('#qrImg').classList.add('hidden');
+    $('#qrPlaceholder').textContent = '正在打开携程登录页…';
+    $('#qrDialog').classList.remove('hidden');
+  }
+
+  function closeQrDialog() {
+    $('#qrDialog').classList.add('hidden');
+  }
+
+  async function fetchQrCode() {
+    const res = await fetch('/api/ctrip/login', { method: 'POST' });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || '打开登录页失败');
+    if (data.qrcode) {
+      $('#qrImg').src = data.qrcode;
+      $('#qrImg').classList.remove('hidden');
+      $('#qrPlaceholder').classList.add('hidden');
+    } else {
+      $('#qrPlaceholder').textContent = '没识别到二维码，点「刷新二维码」重试';
+    }
+  }
+
+  async function refreshQr() {
+    try {
+      $('#qrPlaceholder').classList.remove('hidden');
+      $('#qrImg').classList.add('hidden');
+      $('#qrPlaceholder').textContent = '正在刷新…';
+      const res = await fetch('/api/ctrip/login/qrcode', { method: 'POST' });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || '刷新失败');
+      if (data.qrcode) {
+        $('#qrImg').src = data.qrcode;
+        $('#qrImg').classList.remove('hidden');
+        $('#qrPlaceholder').classList.add('hidden');
+      } else {
+        $('#qrPlaceholder').textContent = '没识别到二维码，再点一次刷新';
+      }
+    } catch (e) {
+      $('#qrPlaceholder').textContent = '刷新失败，再点一次';
+      toast(`刷新二维码失败：${e.message}`, true);
+    }
+  }
+
+  /** 轮询 /api/ctrip/status，直到登录流程结束（登录成功或超时）再看结果 */
   function pollCtripLogin(btn, old) {
     const deadline = Date.now() + 6 * 60 * 1000; // 比后端的 5 分钟多留一点余量
     const timer = setInterval(async () => {
@@ -699,7 +737,8 @@
         clearInterval(timer);
         btn.disabled = false;
         btn.textContent = old;
-        toast('没检测到登录完成，请重试', true);
+        closeQrDialog();
+        toast('登录超时，请重试', true);
         return;
       }
       let st = null;
@@ -708,15 +747,16 @@
       } catch {
         return; // 服务暂时不可用，下一轮再试
       }
-      if (st.loggingIn) return; // 登录窗口还开着，继续等扫码
+      if (st.loggingIn) return; // 还在等扫码，继续轮询
       clearInterval(timer);
       btn.disabled = false;
       btn.textContent = old;
+      closeQrDialog();
       if (st.loggedIn) {
         banner('');
         toast('携程登录成功，可以查实时价了');
       } else {
-        banner('没检测到登录成功。<strong>请再点一次「登录携程」，在弹出的窗口里扫码。</strong>', 'error');
+        banner('没检测到登录成功。<strong>请再点一次「登录携程」，扫码后稍等片刻。</strong>', 'error');
         toast('登录没成功，请重试', true);
       }
     }, 2500);
@@ -938,6 +978,13 @@
     $('#liveList').addEventListener('change', updateLiveSaveLabel);
     $('#liveDialog').addEventListener('click', (e) => {
       if (e.target === $('#liveDialog')) closeLiveDialog();
+    });
+
+    // 携程扫码登录
+    $('#qrRefresh').addEventListener('click', refreshQr);
+    $('#qrCancel').addEventListener('click', closeQrDialog);
+    $('#qrDialog').addEventListener('click', (e) => {
+      if (e.target === $('#qrDialog')) closeQrDialog();
     });
 
     $$('#sortGroup button').forEach((btn) => {

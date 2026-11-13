@@ -16,7 +16,10 @@ import { createAmapClient } from './lib/amap.mjs';
 import { createStore } from './lib/store.mjs';
 import { buildPlan, PlanError } from './lib/plan.mjs';
 import { loadCtripCityMap, lookupCtripCityId } from './lib/ctrip.mjs';
-import { fetchLivePrices, loginCtrip, isProfileReady, profileDir as ctripProfileDir, defaultDates as ctripDates } from './lib/ctrip-live.mjs';
+import {
+  fetchLivePrices, isProfileReady, profileDir as ctripProfileDir, defaultDates as ctripDates,
+  startWebLogin, refreshWebLoginQr, checkWebLogin, isWebLoginActive
+} from './lib/ctrip-live.mjs';
 
 // 目录约定：
 //   开发运行时 —— ROOT 就是脚本所在目录，数据和代码在一起
@@ -84,17 +87,43 @@ function startTray(port) {
 }
 
 async function loadConfig() {
-  // config.json 优先；没有就用 config.example.json，并提示去填 key
-  for (const name of ['config.json', 'config.example.json']) {
+  // config.json 优先（数据目录，用户自己配）；没有就用代码目录里的 config.example.json 当默认模板
+  const candidates = [
+    { file: path.join(DATA_ROOT, 'config.json'), name: 'config.json' },
+    { file: path.join(ROOT, 'config.example.json'), name: 'config.example.json' }
+  ];
+  for (const c of candidates) {
     try {
-      const raw = await fs.readFile(path.join(DATA_ROOT, name), 'utf8');
+      const raw = await fs.readFile(c.file, 'utf8');
       const parsed = JSON.parse(raw.replace(/^\uFEFF/, ''));
-      return { config: parsed, source: name };
+      return { config: parsed, source: c.name };
     } catch {
       /* 继续尝试下一个 */
     }
   }
   return { config: { amapKey: '', defaults: {}, brands: [], priceCheck: {} }, source: '内置默认' };
+}
+
+/** 把项目自带数据（城市映射、演示数据）从代码目录补到数据目录（Docker 挂空卷时用） */
+async function seedProjectData() {
+  if (ROOT === DATA_ROOT) return; // 开发/本地同一个目录，不用复制
+  for (const name of ['ctrip-city-map.json', 'demo-plan.json']) {
+    const src = path.join(ROOT, 'data', name);
+    const dst = path.join(DATA_DIR, name);
+    try {
+      const st = await fs.stat(dst);
+      if (st.size > 0) continue; // 已有，跳过
+    } catch {
+      /* 目标不存在，往下复制 */
+    }
+    try {
+      await fs.mkdir(path.dirname(dst), { recursive: true });
+      await fs.copyFile(src, dst);
+      console.log(`[data] 已从代码目录补齐 ${name}`);
+    } catch {
+      /* 源文件不存在就算了 */
+    }
+  }
 }
 
 function json(res, status, body) {
@@ -147,7 +176,7 @@ async function serveStatic(res, pathname) {
 async function isAlreadyRunning(p) {
   try {
     const res = await fetch(`http://127.0.0.1:${p}/api/config`, { signal: AbortSignal.timeout(900) });
-    if (!res.ok) return false;
+    if (!res.ok) return res.status === 401; // 401 说明服务在跑（只是要认证），也算"已运行"
     const j = await res.json();
     return Boolean(j && j.ok === true && Array.isArray(j.brands));
   } catch {
@@ -159,8 +188,9 @@ async function main() {
   const CONFIG_FILE = path.join(DATA_ROOT, 'config.json');
 
   let { config, source } = await loadConfig();
-  const wantPort = Number(argValue('port', config.server?.port || 5173));
-  const host = argValue('host', '127.0.0.1');
+  // 托管平台（Railway/Render 等）会注入 PORT；有它说明是部署环境，默认绑 0.0.0.0 供外网访问
+  const wantPort = Number(process.env.PORT || argValue('port', config.server?.port || 5173));
+  const host = argValue('host', process.env.HOST || (process.env.PORT ? '0.0.0.0' : '127.0.0.1'));
   const shouldOpen = argv.includes('--open');
 
   // 已经开着一个就别再起第二个，直接把页面打开
@@ -206,17 +236,42 @@ async function main() {
     console.log(`[config] 检测到 config.json 变更，已重新加载（${source}）`);
   }
 
+  await seedProjectData();
   await reloadConfig();
   const store = createStore(DATA_DIR);
 
-  // 携程登录：是否有一个扫码窗口正在等（用来给前端轮询状态，也防止重复弹窗）
-  let ctripLoginRunning = false;
-  let ctripLastLoginOk = null;
+  // 访问密码：设 HNF_PASSWORD 后，整个站点（含静态文件）都要 HTTP Basic Auth。
+  // HNF_USER 可选，默认 admin。用于把在线服务限制给自己/少数人用。
+  const AUTH_USER = process.env.HNF_USER || 'admin';
+  const AUTH_PASS = process.env.HNF_PASSWORD || '';
+
+  // 携程登录流程状态由 lib/ctrip-live.mjs 里的 webLogin 管理（网页扫码登录）
 
   const server = http.createServer(async (req, res) => {
     const started = Date.now();
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     const { pathname } = url;
+
+    // 访问控制：设置了密码就要求登录，未授权直接 401
+    if (AUTH_PASS) {
+      const m = /^Basic\s+(.+)$/i.exec(req.headers.authorization || '');
+      let ok = false;
+      if (m) {
+        const decoded = Buffer.from(m[1], 'base64').toString('utf8');
+        const idx = decoded.indexOf(':');
+        const u = idx >= 0 ? decoded.slice(0, idx) : '';
+        const p = idx >= 0 ? decoded.slice(idx + 1) : '';
+        ok = u === AUTH_USER && p === AUTH_PASS;
+      }
+      if (!ok) {
+        res.writeHead(401, {
+          'content-type': 'text/plain; charset=utf-8',
+          'www-authenticate': 'Basic realm="hotel-near-factory"'
+        });
+        res.end('需要登录');
+        return;
+      }
+    }
 
     try {
       if (!pathname.startsWith('/api/')) {
@@ -279,39 +334,31 @@ async function main() {
       /* ---- 携程实时房价 ---- */
 
       if (pathname === '/api/ctrip/status' && req.method === 'GET') {
-        json(res, 200, {
-          ok: true,
-          loggedIn: await isProfileReady(CTRIP_PROFILE_DIR),
-          loggingIn: ctripLoginRunning
-        });
+        // checkWebLogin 会顺便推进登录流程（检测成功/超时并关浏览器）
+        const st = await checkWebLogin();
+        const loggedIn = st.loggedIn || (await isProfileReady(CTRIP_PROFILE_DIR));
+        json(res, 200, { ok: true, loggedIn, loggingIn: st.loggingIn });
         return;
       }
 
       if (pathname === '/api/ctrip/login' && req.method === 'POST') {
-        if (ctripLoginRunning) {
+        // 网页扫码登录：headless 打开携程登录页，截图二维码返回给前端展示
+        try {
+          const r = await startWebLogin({ profileDir: CTRIP_PROFILE_DIR });
           json(res, 200, {
-            ok: false,
-            code: 'LOGIN_IN_PROGRESS',
-            loggingIn: true,
-            error: '登录窗口已经打开了，请在弹出的 Chrome 窗口里扫码'
+            ok: true,
+            qrcode: r.qrcode || null,
+            hint: r.qrcode ? '' : '没识别到二维码，稍后点「刷新二维码」重试'
           });
-          return;
+        } catch (e) {
+          json(res, 500, { ok: false, error: e.message || '打开登录页失败' });
         }
-        ctripLoginRunning = true;
-        // 先回前端，扫码登录在后台跑（最多 5 分钟），别让这个请求挂 5 分钟
-        json(res, 200, { ok: true, started: true, hint: '已打开登录窗口，请在弹出的 Chrome 窗口里扫码登录携程' });
-        loginCtrip({ profileDir: CTRIP_PROFILE_DIR })
-          .then((r) => {
-            ctripLastLoginOk = r.ok;
-            console.log(`[ctrip] 登录${r.ok ? '成功' : '超时未完成'}`);
-          })
-          .catch((e) => {
-            ctripLastLoginOk = false;
-            console.error('[ctrip] 登录流程出错:', e.message);
-          })
-          .finally(() => {
-            ctripLoginRunning = false;
-          });
+        return;
+      }
+
+      if (pathname === '/api/ctrip/login/qrcode' && req.method === 'POST') {
+        const r = await refreshWebLoginQr();
+        json(res, r.ok ? 200 : 400, r);
         return;
       }
 
@@ -322,6 +369,14 @@ async function main() {
             code: 'CTRIP_NOT_LOGGED_IN',
             error: '还没登录携程',
             hint: '点页面下方的「登录携程」按钮扫码登录，登录一次后实时价就能用'
+          });
+          return;
+        }
+        if (isWebLoginActive()) {
+          json(res, 400, {
+            ok: false,
+            code: 'CTRIP_LOGGING_IN',
+            error: '正在登录携程，请先扫码完成登录'
           });
           return;
         }
