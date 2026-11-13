@@ -1,0 +1,197 @@
+{
+  "amapKey": "在此填入高德控制台新建的【Web服务】类型 key",
+  "server": {
+    "port": 5173,
+    "minRequestGapMs": 350
+  },
+  "defaults": {
+    "city": "",
+    "from": "",
+    "radiusKm": 10,
+    "priceMin": 300,
+    "priceMax": 600,
+    "maxPages": 4
+  },
+  "_brandsNote": "tier=1 是你常住的首选（希尔顿/假日/温德姆/全季/亚朵），2=同档其它连锁，3=经济型连锁。keywords 命中即归入该组，大小写不敏感。",
+  "brands": [
+    {
+      "group": "希尔顿系",
+      "tier": 1,
+      "keywords": [
+        "希尔顿",
+        "hilton",
+        "欢朋",
+        "hampton",
+        "逸林",
+        "doubletree",
+        "康莱德",
+        "conrad",
+        "华尔道夫",
+        "waldorf",
+        "嘉悦里",
+        "canopy"
+      ]
+    },
+    {
+      "group": "假日/洲际系",
+      "tier": 1,
+      "keywords": [
+        "假日",
+        "holiday inn",
+        "holiday",
+        "智选假日",
+        "皇冠假日",
+        "crowne",
+        "英迪格",
+        "indigo",
+        "洲际",
+        "intercontinental"
+      ]
+    },
+    {
+      "group": "温德姆系",
+      "tier": 1,
+      "keywords": [
+        "温德姆",
+        "wyndham",
+        "华美达",
+        "ramada",
+        "戴斯",
+        "days inn",
+        "豪生",
+        "howard johnson",
+        "蔚景",
+        "wingate"
+      ]
+    },
+    {
+      "group": "全季",
+      "tier": 1,
+      "keywords": [
+        "全季",
+        "ji hotel"
+      ]
+    },
+    {
+      "group": "亚朵",
+      "tier": 1,
+      "keywords": [
+        "亚朵",
+        "atour"
+      ]
+    },
+    {
+      "group": "桔子/华住中高端",
+      "tier": 2,
+      "keywords": [
+        "桔子水晶",
+        "桔子",
+        "orange hotel",
+        "漫心",
+        "美仑",
+        "美居",
+        "mercure",
+        "星程",
+        "施柏阁",
+        "花间堂",
+        "城际",
+        "intercity"
+      ]
+    },
+    {
+      "group": "万豪系",
+      "tier": 2,
+      "keywords": [
+        "万豪",
+        "marriott",
+        "万怡",
+        "courtyard",
+        "万丽",
+        "renaissance",
+        "万枫",
+        "fairfield",
+        "福朋",
+        "four points",
+        "雅乐轩",
+        "aloft",
+        "喜来登",
+        "sheraton",
+        "威斯汀",
+        "westin",
+        "艾美",
+        "le meridien"
+      ]
+    },
+    {
+      "group": "凯悦/雅高系",
+      "tier": 2,
+      "keywords": [
+        "凯悦",
+        "hyatt",
+        "嘉轩",
+        "嘉寓",
+        "诺富特",
+        "novotel",
+        "铂尔曼",
+        "pullman",
+        "美爵",
+        "grand mercure"
+      ]
+    },
+    {
+      "group": "国内中高端连锁",
+      "tier": 2,
+      "keywords": [
+        "维也纳国际",
+        "维也纳",
+        "丽枫",
+        "美豪",
+        "和颐",
+        "锦江都城",
+        "开元",
+        "君亭",
+        "柏曼",
+        "凯里亚德",
+        "丽呈",
+        "尚美",
+        "格美",
+        "白玉兰",
+        "康铂",
+        "潮漫",
+        "喆啡"
+      ]
+    },
+    {
+      "group": "经济型连锁",
+      "tier": 3,
+      "keywords": [
+        "汉庭",
+        "hanting",
+        "如家",
+        "home inn",
+        "7天",
+        "7days",
+        "格林豪泰",
+        "green tree",
+        "城市便捷",
+        "尚客优",
+        "速8",
+        "super 8",
+        "宜必思",
+        "ibis",
+        "海友",
+        "怡莱",
+        "布丁",
+        "99旅馆",
+        "云上四季"
+      ]
+    }
+  ],
+  "priceCheck": {
+    "ctrip": "https://hotels.ctrip.com/hotels/list?city={ctripCityId}",
+    "ctripNoCity": "https://hotels.ctrip.com/hotels/list?keyword={city}{name}",
+    "amapPoi": "https://ditu.amap.com/place/{id}",
+    "train12306": "https://www.12306.cn/index/",
+    "flight": "https://flights.ctrip.com/online/channel/domestic"
+  }
+}

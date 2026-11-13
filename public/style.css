@@ -1,0 +1,819 @@
+:root {
+  --bg: #0f172a;
+  --panel: #ffffff;
+  --panel-soft: #f6f7f9;
+  --line: #e3e6ea;
+  --text: #1a2230;
+  --muted: #6b7684;
+  --brand: #b8860b;
+  --accent: #1f6feb;
+  --r1: #16a34a;
+  --r2: #65a30d;
+  --r3: #ca8a04;
+  --r4: #ea580c;
+  --r5: #dc2626;
+  --radius: 10px;
+  font-synthesis-weight: none;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", "Segoe UI", system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 13px;
+}
+
+.hidden { display: none !important; }
+
+/* ---------- 顶部 ---------- */
+.banner {
+  padding: 9px 16px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  background: #fff7ed;
+  border-bottom: 1px solid #fed7aa;
+  color: #9a3412;
+  flex: 0 0 auto;
+}
+.banner.error { background: #fef2f2; border-bottom-color: #fecaca; color: #991b1b; }
+.banner.ok { background: #f0fdf4; border-bottom-color: #bbf7d0; color: #166534; }
+.banner a { color: inherit; font-weight: 600; }
+
+.topbar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 10px 16px;
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.brand-mark {
+  background: linear-gradient(135deg, #b8860b, #e0a92b);
+  color: #fff;
+  border-radius: 6px;
+  padding: 3px 7px;
+  font-size: 12px;
+}
+.brand-text { font-size: 14px; }
+
+.search-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex: 1 1 640px;
+  flex-wrap: wrap;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 120px;
+  min-width: 96px;
+}
+.field > span {
+  font-size: 11px;
+  color: var(--muted);
+  padding-left: 2px;
+}
+.field-wide { flex: 2 1 260px; }
+.field-num { flex: 0 0 82px; min-width: 82px; }
+
+input, select {
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  width: 100%;
+  min-width: 0;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.12);
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  padding: 7px 12px;
+  transition: background 0.15s, border-color 0.15s, transform 0.05s;
+}
+button:hover:not(:disabled) { background: var(--panel-soft); }
+button:active:not(:disabled) { transform: translateY(1px); }
+button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  padding: 8px 20px;
+}
+button.primary:hover:not(:disabled) { background: #1657c4; }
+button.ghost { color: var(--muted); }
+
+/* ---------- 布局 ---------- */
+.layout {
+  flex: 1 1 auto;
+  display: grid;
+  /* 侧栏宽度跟着屏幕走：小笔记本别太挤，大屏别只剩窄窄一条 */
+  grid-template-columns: minmax(0, 1fr) clamp(372px, 30%, 660px);
+  min-height: 0;
+}
+
+.map-wrap { position: relative; min-height: 0; }
+#map { position: absolute; inset: 0; background: #e8eef3; }
+
+.map-overlay {
+  position: absolute;
+  left: 12px;
+  bottom: 24px;
+  z-index: 500;
+  pointer-events: none;
+}
+.legend {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.7;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+}
+.legend-title { font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.legend-row { display: flex; align-items: center; gap: 5px; }
+.dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--muted);
+  flex: 0 0 auto;
+}
+.dot.brand { background: var(--brand); box-shadow: 0 0 0 2px rgba(184, 134, 11, 0.25); }
+.dot.pin { background: #d92d20; }
+.dot.r1 { background: var(--r1); }
+.dot.r3 { background: var(--r3); }
+.dot.r5 { background: var(--r5); }
+
+.map-tools {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  z-index: 500;
+  display: flex;
+  gap: 6px;
+}
+.map-tools button {
+  background: rgba(255, 255, 255, 0.95);
+  font-size: 12px;
+  padding: 6px 10px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+}
+
+/* ---------- 侧栏 ---------- */
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  /* 关键：空间不够时整栏可滚动，而不是把列表压成 0 像素 */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.panel-head { padding: 10px 12px 0; flex: 0 0 auto; }
+
+/* 操作区（查价日期 + 按钮）固定在侧栏顶部，列表在下方滚动 */
+.actions-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  flex: 0 0 auto;
+  background: var(--panel);
+  box-shadow: 0 1px 0 var(--line);
+}
+.summary-empty { text-align: center; padding: 18px 6px 14px; color: var(--muted); }
+.summary-empty strong { color: var(--text); font-size: 14px; display: block; margin-bottom: 6px; }
+.summary-empty p { margin: 0 0 12px; line-height: 1.6; }
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.stat {
+  background: var(--panel-soft);
+  border-radius: 8px;
+  padding: 6px 9px;
+}
+.stat .k { font-size: 10.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat .v { font-size: 16px; font-weight: 700; line-height: 1.2; }
+.stat .v small { font-size: 10.5px; font-weight: 500; color: var(--muted); }
+
+.factory-line {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.55;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.factory-dest b { color: var(--text); font-size: 12.5px; }
+/* 地址只占一行，太长用省略号，完整内容放 title 里悬停可见 */
+.factory-addr {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.factory-stats { display: block; }
+.factory-stats b { color: var(--text); }
+
+.warnings {
+  margin-top: 8px;
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.warnings summary { cursor: pointer; color: var(--accent); margin-bottom: 3px; }
+.warnings > div { padding-left: 6px; }
+
+/* 交通方案：默认收起，只留一行摘要，省出列表空间 */
+.travel { padding: 0 12px; flex: 0 0 auto; }
+.travel:not(:empty) { padding: 8px 12px 0; }
+
+.travel-details > summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+  cursor: pointer;
+  font-size: 12px;
+  list-style: none;
+  user-select: none;
+}
+.travel-details > summary::-webkit-details-marker { display: none; }
+.travel-details > summary::before {
+  content: '▸';
+  color: var(--muted);
+  font-size: 10px;
+  flex: 0 0 auto;
+}
+.travel-details[open] > summary::before { content: '▾'; }
+.travel-details[open] > summary {
+  border-radius: 8px 8px 0 0;
+  border-bottom-color: transparent;
+}
+.travel-details > summary:hover { background: #f1f4f8; }
+.travel-title { font-weight: 600; color: var(--text); flex: 0 0 auto; }
+.travel-summary-text {
+  color: var(--muted);
+  font-size: 11.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.travel-body {
+  border: 1px solid var(--line);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  padding: 8px;
+  background: #fbfcfd;
+}
+.travel-body .travel-card { margin-bottom: 8px; }
+.travel-body .travel-card:last-child { margin-bottom: 0; }
+
+.travel-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  background: #fff;
+}
+.travel-card h4 {
+  margin: 0 0 4px;
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.travel-card h4 .tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+.travel-opt {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--muted);
+  padding: 2px 0;
+  line-height: 1.5;
+  flex-wrap: wrap;
+}
+.travel-opt b { color: var(--text); }
+.travel-legs { font-size: 11.5px; color: var(--muted); padding-left: 2px; line-height: 1.5; }
+.travel-notes { font-size: 11.5px; color: #9a3412; line-height: 1.55; margin-top: 4px; }
+.travel-links { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+.travel-links a {
+  font-size: 11.5px;
+  color: var(--accent);
+  text-decoration: none;
+  border: 1px solid #cfdffb;
+  border-radius: 6px;
+  padding: 2px 7px;
+  background: #f5f9ff;
+}
+.travel-links a:hover { background: #e8f1ff; }
+
+.candidates { padding: 0 12px 4px; flex: 0 0 auto; }
+.candidates h4 { margin: 8px 0 5px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.candidate {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  width: 100%;
+  text-align: left;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.candidate .cname { font-weight: 600; }
+.candidate .caddr { color: var(--muted); font-size: 11px; }
+.candidate.active { border-color: var(--accent); background: #f5f9ff; }
+
+.filters {
+  padding: 7px 12px 6px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  flex: 0 0 auto;
+  background: #fcfcfd;
+  /* 面板滚动时筛选栏固定在顶部 */
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+.filter-row { display: flex; align-items: center; gap: 7px; margin-bottom: 5px; flex-wrap: wrap; }
+.filter-row:last-child { margin-bottom: 0; }
+.filter-label { font-size: 11px; color: var(--muted); flex: 0 0 auto; }
+
+.segmented { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.segmented button {
+  border: none;
+  border-radius: 0;
+  padding: 4px 9px;
+  font-size: 11.5px;
+  color: var(--muted);
+  background: #fff;
+}
+.segmented button + button { border-left: 1px solid var(--line); }
+.segmented button.active { background: #eef4ff; color: var(--accent); font-weight: 600; }
+
+.chips { display: flex; gap: 5px; flex-wrap: wrap; }
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 7px;
+  cursor: pointer;
+  background: #fff;
+  user-select: none;
+}
+.chip input { width: auto; margin: 0; accent-color: var(--accent); }
+.chip:has(input:checked) { border-color: var(--accent); color: var(--accent); background: #f5f9ff; }
+
+/* ---------- 酒店列表 ---------- */
+.list {
+  /* 内容少时撑满，内容多时把面板撑出滚动条（面板本身负责滚动） */
+  flex: 1 0 auto;
+  padding: 8px 12px 14px;
+  min-height: 0;
+}
+
+.hotel {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 7px 10px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  background: #fff;
+}
+.hotel:hover { border-color: #c3d4f5; box-shadow: 0 2px 10px rgba(31, 111, 235, 0.08); }
+.hotel.active { border-color: var(--accent); background: #f8fbff; }
+.hotel.out-budget { opacity: 0.72; }
+
+.hotel-top { display: flex; align-items: baseline; gap: 7px; }
+.hotel-no {
+  flex: 0 0 auto;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: var(--muted);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+.hotel-no.r1 { background: var(--r1); }
+.hotel-no.r2 { background: var(--r2); }
+.hotel-no.r3 { background: var(--r3); }
+.hotel-no.r4 { background: var(--r4); }
+.hotel-no.r5 { background: var(--r5); }
+
+.hotel-name {
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.45;
+  flex: 1 1 auto;
+  min-width: 0;
+  word-break: break-all;
+}
+
+.hotel-price { font-weight: 700; font-size: 14px; color: #b45309; white-space: nowrap; }
+.hotel-price.none { color: var(--muted); font-size: 11.5px; font-weight: 500; }
+.hotel-price.over { color: #9a3412; font-size: 12px; }
+/* 起价对应的房型，小字跟在价格后面 */
+.hotel-price .price-note {
+  display: block;
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--muted);
+  line-height: 1.2;
+  text-align: right;
+}
+
+.hotel-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 10px;
+  font-size: 11.5px;
+  color: var(--muted);
+  margin: 3px 0 0 25px;
+  line-height: 1.6;
+}
+.hotel-meta .dist { color: var(--text); font-weight: 600; }
+
+.badge {
+  display: inline-block;
+  font-size: 10.5px;
+  font-weight: 600;
+  border-radius: 4px;
+  padding: 1px 5px;
+  background: #eef1f5;
+  color: #4b5563;
+}
+.badge.tier1 { background: #fdf6e3; color: #8a6d0b; border: 1px solid #f0dfae; }
+.badge.tier2 { background: #eef4ff; color: #1f4fa8; }
+.badge.tier3 { background: #f1f5f9; color: #52606d; }
+.badge.budget { background: #ecfdf5; color: #047857; }
+.badge.manual { background: #f5f3ff; color: #5b21b6; }
+.badge.star { background: #fff7ed; color: #9a3412; }
+
+.price-hint {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: #9a3412;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  padding: 5px 8px;
+}
+
+.hotel-addr {
+  margin: 3px 0 0 25px;
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.hotel-actions {
+  display: flex;
+  gap: 6px;
+  margin: 5px 0 0 25px;
+  flex-wrap: wrap;
+}
+.hotel-actions a, .hotel-actions button {
+  font-size: 11.5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--accent);
+  border: 1px solid #cfdffb;
+  background: #f5f9ff;
+}
+.hotel-actions a:hover, .hotel-actions button:hover { background: #e8f1ff; }
+.hotel-actions .ctrip { color: #0b7ec4; border-color: #bde0f5; background: #f1faff; }
+
+.panel-foot {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10.5px;
+  color: var(--muted);
+  background: #fcfcfd;
+  flex-wrap: wrap;
+}
+/* 携程查价日期栏 */
+.live-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-top: 1px solid var(--line);
+  background: #fbfcfd;
+  font-size: 11.5px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+.live-bar-label { flex: 0 0 auto; white-space: nowrap; }
+.live-bar input[type='date'] {
+  width: auto;
+  min-width: 118px;
+  flex: 0 0 auto;
+  padding: 3px 6px;
+  font-size: 11.5px;
+  border-radius: 6px;
+}
+.live-bar-sep { flex: 0 0 auto; color: var(--muted); }
+.live-bar-hint { flex: 0 0 auto; font-size: 11px; color: var(--accent); }
+
+.panel-foot .hint {
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+.panel-foot button { padding: 4px 10px; font-size: 11.5px; white-space: nowrap; }
+.panel-foot .cta {
+  color: #0b7ec4;
+  border-color: #bde0f5;
+  background: #f1faff;
+  font-weight: 600;
+}
+.panel-foot .cta:hover:not(:disabled) { background: #e0f4ff; }
+
+/* ---------- 地图标记 ---------- */
+.amap-pin {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px 2px 3px;
+  border-radius: 999px;
+  background: #fff;
+  border: 2px solid var(--r3);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.22);
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--text);
+  transform: translate(-50%, -50%);
+  line-height: 1.4;
+}
+.amap-pin .no {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--r3);
+  color: #fff;
+  font-size: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+.amap-pin.band-r1 { border-color: var(--r1); }
+.amap-pin.band-r1 .no { background: var(--r1); }
+.amap-pin.band-r2 { border-color: var(--r2); }
+.amap-pin.band-r2 .no { background: var(--r2); }
+.amap-pin.band-r3 { border-color: var(--r3); }
+.amap-pin.band-r3 .no { background: var(--r3); }
+.amap-pin.band-r4 { border-color: var(--r4); }
+.amap-pin.band-r4 .no { background: var(--r4); }
+.amap-pin.band-r5 { border-color: var(--r5); }
+.amap-pin.band-r5 .no { background: var(--r5); }
+.amap-pin.tier1 { box-shadow: 0 0 0 2px rgba(184, 134, 11, 0.35), 0 2px 8px rgba(15, 23, 42, 0.22); }
+.amap-pin.selected { box-shadow: 0 0 0 3px rgba(31, 111, 235, 0.5), 0 3px 12px rgba(15, 23, 42, 0.3); z-index: 999; }
+
+.factory-pin {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #d92d20;
+  color: #fff;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 10px rgba(217, 45, 32, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ---------- 弹层 / 提示 ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  background: #1a2230;
+  color: #fff;
+  font-size: 12.5px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  z-index: 3000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  max-width: 80vw;
+}
+.toast.error { background: #b91c1c; }
+
+.dialog {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2500;
+}
+.dialog-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 18px 20px;
+  width: 320px;
+  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.3);
+}
+.dialog-card h3 { margin: 0 0 4px; font-size: 15px; }
+.dialog-sub { margin: 0 0 12px; font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+.dialog-card .field { margin-bottom: 10px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+
+/* 携程实时价确认框 */
+.dialog-card.dialog-wide {
+  width: min(620px, 92vw);
+  max-height: 82vh;
+  display: flex;
+  flex-direction: column;
+}
+.live-list {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
+  margin: 0 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  max-height: 50vh;
+}
+.live-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  line-height: 1.5;
+  cursor: pointer;
+}
+.live-row:last-child { border-bottom: none; }
+.live-row:hover { background: #f8fbff; }
+.live-row input { width: auto; margin-top: 2px; accent-color: var(--accent); }
+.live-row .lname { font-weight: 600; flex: 1 1 auto; min-width: 0; word-break: break-all; }
+.live-row .lorig { color: var(--muted); font-size: 11px; display: block; font-weight: 400; }
+.live-row .lprice { font-weight: 700; color: #b45309; white-space: nowrap; text-align: right; }
+.live-row .lprice .lroom { display: block; font-size: 10px; font-weight: 400; color: var(--muted); margin-top: 1px; }
+.live-row .lscore { font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+.live-row.low .lscore { color: #b45309; }
+.live-empty { padding: 18px; text-align: center; color: var(--muted); font-size: 12px; line-height: 1.7; }
+
+.leaflet-container { font-family: inherit; }
+.leaflet-popup-content { margin: 10px 12px; font-size: 12.5px; line-height: 1.6; }
+.leaflet-popup-content b { font-size: 13px; }
+
+/* ---------- 滚动条 ---------- */
+.panel::-webkit-scrollbar { width: 9px; }
+.panel::-webkit-scrollbar-thumb { background: #d7dce3; border-radius: 5px; border: 2px solid #fff; }
+.panel::-webkit-scrollbar-thumb:hover { background: #c2c9d2; }
+.panel::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- 窄屏 ---------- */
+/* 中等宽度：顶部表单收紧，别让它长成三行把地图和列表挤没 */
+@media (max-width: 1180px) {
+  .topbar { gap: 10px; padding: 8px 12px; }
+  .search-form { gap: 6px; flex-basis: 100%; }
+  .field > span { font-size: 10px; }
+  input, select { padding: 6px 8px; font-size: 12.5px; }
+  .field-num { flex: 0 0 74px; min-width: 74px; }
+  button.primary { padding: 7px 16px; }
+}
+
+/* 窄屏改成上下：地图在上，列表在下 */
+@media (max-width: 1000px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(200px, 34vh) 1fr;
+  }
+  .panel { border-left: none; border-top: 1px solid var(--line); }
+  .map-overlay { display: none; }
+  .map-tools { top: 8px; right: 8px; }
+  .brand-text { display: none; }
+
+  /* 竖向空间紧张：统计改成一行文字，地址和说明文字收起，尽量留给列表 */
+  .summary-grid {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+  .stat {
+    background: none;
+    padding: 0;
+    border-radius: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    min-width: 0;
+  }
+  .stat .k { font-size: 11px; }
+  .stat .v { font-size: 13px; }
+  .stat .v small { font-size: 10px; }
+  .factory-addr { display: none; }
+  .factory-line { padding-bottom: 5px; }
+  .panel-foot .hint { display: none; }
+  .panel-foot { padding: 5px 12px; }
+  .travel:not(:empty) { padding: 6px 12px 0; }
+  .filters { padding: 6px 12px 5px; }
+
+  /* 小屏上「怎么去」让位给酒店列表，排到列表后面 */
+  .panel-head { order: 1; }
+  .actions-top { order: 2; }
+  .candidates { order: 3; }
+  .filters { order: 4; }
+  #list { order: 5; }
+  #travel { order: 6; }
+}
+
+/* 很窄的窗口：顶部表单和卡片缩进再压一压 */
+@media (max-width: 640px) {
+  .layout { grid-template-rows: minmax(180px, 30vh) 1fr; }
+  .topbar { gap: 8px; }
+  .field-wide { flex: 1 1 100%; }
+  .hotel-meta, .hotel-addr, .hotel-actions { margin-left: 0; }
+  .summary-grid { gap: 8px; }
+}

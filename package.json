@@ -1,0 +1,18 @@
+{
+  "name": "hotel-near-factory",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "出差小助手：地图上定位目的地厂家，按距离/价格/品牌把周边酒店标在一张图上",
+  "scripts": {
+    "start": "node server.mjs",
+    "launch": "powershell -NoProfile -ExecutionPolicy Bypass -File launcher.ps1",
+    "check": "node scripts/check-key.mjs",
+    "preflight": "node scripts/preflight.mjs",
+    "citymap": "node scripts/build-ctrip-citymap.mjs",
+    "selftest": "node scripts/selftest.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
