@@ -58,7 +58,8 @@ function openBrowser(url) {
       : process.platform === 'darwin'
         ? `open "${url}"`
         : `xdg-open "${url}"`;
-  exec(cmd, (e) => {
+  // windowsHide：别让这个 cmd 弹出一个空白控制台窗口
+  exec(cmd, { windowsHide: true }, (e) => {
     if (e) console.log(`（自动打开浏览器失败，请手动访问 ${url}）`);
   });
 }
